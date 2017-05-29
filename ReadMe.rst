@@ -114,7 +114,7 @@ P.S 一些思路
       - CONFIG : 一个字典，里面有工作流的两个参数。例如，假设该工作是工作流的第i个item，则此处的workNowInput即是Strategy中的workNowInput[i]
 
 
-.. code:: DConf
+.. code:: Python
 
   $
   注释

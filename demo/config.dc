@@ -1,0 +1,54 @@
+	
+
+#GenerateIter
+Do
+with open("./TypeList.txt",encoding='utf-8') as f:
+    ontologies=list (filter(lambda x:x,f.read().split("\n")))
+In
+ontologies
+#
+#Strategy
+for i,item in enumerate(GenerateIter):
+    index=i%N_job
+    workNowInput[i]=GenerateIter[i]
+    workNowOutput[i]=None
+    Strategy[i]=index $表示第i个工作分发到第index个进程$
+#
+
+#Requirements
+    os
+    dbpediaService
+        DBPediaSPARQL
+#
+
+
+
+#WordArg#
+#Action
+Do 
+workNowInput=CONFIG['workNowInput']
+EntityNum=DBPediaSPARQL.CountEntitiesOfType(workNowInput)
+abstracts=DBPediaSPARQL.getAbstract(workNowInput,EntityNum)
+
+dir='./TrainDocs/%s'%workNowInput
+
+try:
+    os.makedirs(dir)
+except:
+    pass
+for entity,abstract in abstracts:
+    if entity.count('/')>0:continue
+    if not abstract:continue
+    try:
+        try:
+            with open("%s/%s"%(dir,entity),'w',encoding='utf-8') as f:
+                f.write(abstract)
+        except:
+            with open("%s/%s.txt"%(dir,entity),'w',encoding='gbk') as f:
+                f.write(abstract)
+    except:
+        print(entity)
+        os.remove("%s/%s"%(dir,entity)) 
+In
+None
+#

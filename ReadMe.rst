@@ -77,3 +77,93 @@ P.S 一些思路
     - 任何时候，主进程都可以调整工作缓存区中的工作分布。
 
     - 子进程也可以通过主进程进行间接交流。
+
+配置文件
+--------
+
+我觉得这个是最有意思的了，因为很像DSL...
+
+下面就是我这次工作的配置。
+
+一些简单的说明：
+  - 由'$'括起来的是注释区域
+
+  - Do-In语句：
+    Do区域里写动作
+    In区域里写返回值
+  - 由'#'括起来的是功能代码块
+
+    - GenerateIter :定义工作流，以Do-In语句形式返回工作流的定义。
+
+    - Strategy : 定义分发策略。有如下预定义变量可以使用:
+
+      - GenerateIter:工作流。
+
+      - workNowInput:工作流蕴含的参数1的流。 对应的item会被传入对应的那份工作中，下同。
+
+      - workNowOutput:工作流蕴含的参数2的流.
+
+    - Strategy: 分发流，对应的item的值 = 对应的工作流参数被传入的工作缓存区分区编号。
+
+    - Requirements： 工作模式中需要导入的Python包。只有二级关系。分别表示"import xxx"和"from xxx import xxx"模式。
+
+    - Action： 工作模式。有如下预定义变量可以使用：
+
+      - sys.argv : argv[1]表示子进程编号。
+
+      - CONFIG : 一个字典，里面有工作流的两个参数。例如，假设该工作是工作流的第i个item，则此处的workNowInput即是Strategy中的workNowInput[i]
+
+
+.. code::DConf
+  $
+  Now : 工作分发的序号数
+
+  $
+  #GenerateIter
+  Do
+  with open("./TypeList.txt",encoding='utf-8') as f:
+    ontologies=list (filter(lambda x:x,f.read().split("\n")))
+  In
+  ontologies
+  #
+  #Strategy
+  for i,item in enumerate(GenerateIter):
+    index=i%N_job
+    workNowInput[i]=GenerateIter[i]
+    workNowOutput[i]=None
+    Strategy[i]=index $表示第i个工作分发到第index个进程$
+  #
+
+  #Requirements
+      os
+      dbpediaService
+          DBPediaSPARQL
+  #
+  #Action
+  Do
+  workNowInput=CONFIG['workNowInput']
+  EntityNum=DBPediaSPARQL.CountEntitiesOfType(workNowInput)
+  abstracts=DBPediaSPARQL.getAbstract(workNowInput,EntityNum)
+
+  dir='./TrainDocs/%s'%workNowInput
+
+  try:
+    os.makedirs(dir)
+  except:
+    pass
+  for entity,abstract in abstracts:
+    if entity.count('/')>0:continue
+    if not abstract:continue
+    try:
+        try:
+            with open("%s/%s"%(dir,entity),'w',encoding='utf-8') as f:
+                f.write(abstract)
+        except:
+            with open("%s/%s.txt"%(dir,entity),'w',encoding='gbk') as f:
+                f.write(abstract)
+    except:
+        print(entity)
+        os.remove("%s/%s"%(dir,entity))
+  In
+  None
+  #
